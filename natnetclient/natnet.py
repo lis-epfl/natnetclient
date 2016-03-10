@@ -6,6 +6,7 @@ import time
 import threading
 import warnings
 import datetime
+import struct
 
 def strcpy(stream):
     """Reads a IOStream one step at a time, returning the previous string before it reached a null character."""
@@ -15,27 +16,27 @@ def strcpy(stream):
         eof = stream.read(1)
     return ''.join(szName).replace(' ', '_')  # Convert to string without spaces.
 
-NAT_PING  					= 0
-NAT_PINGRESPONSE			= 1
-NAT_REQUEST					= 2
-NAT_RESPONSE				= 3
-NAT_REQUEST_MODELDEF		= 4
-NAT_MODELDEF				= 5
-NAT_REQUEST_FRAMEOFDATA		= 6
-NAT_FRAMEOFDATA				= 7
-NAT_MESSAGESTRING			= 8
-NAT_UNNRECOGNIZED_REQUEST	= 100
-UNDEFINED					= 999999.9999
+NAT_PING                    = 0
+NAT_PINGRESPONSE            = 1
+NAT_REQUEST                 = 2
+NAT_RESPONSE                = 3
+NAT_REQUEST_MODELDEF        = 4
+NAT_MODELDEF                = 5
+NAT_REQUEST_FRAMEOFDATA     = 6
+NAT_FRAMEOFDATA             = 7
+NAT_MESSAGESTRING           = 8
+NAT_UNNRECOGNIZED_REQUEST   = 100
+UNDEFINED                   = 999999.9999
 
-MAX_PACKETSIZE				= 100000
-MAX_NAMELENGTH				= 256
+MAX_PACKETSIZE              = 100000
+MAX_NAMELENGTH              = 256
 
-CLIENT_ADDRESS =            "127.0.0.1" #socket.gethostbyname(socket.gethostname())  #Default is now local address.
-MULTICAST_ADDRESS			= "239.255.42.99"
-PORT_COMMAND				= 1510
-PORT_DATA					= 1511
+CLIENT_ADDRESS              = "127.0.0.1"
+MULTICAST_ADDRESS           = "224.0.0.1"
+PORT_COMMAND                = 1510
+PORT_DATA                   = 1511
 
-OPT_VAL						= 0x100000
+OPT_VAL                     = 0x100000
 
 
 class NatBaseError(Exception):
@@ -62,7 +63,7 @@ class NatSocket(object):
 
     def __init__(self, client_ip, port, max_packet_size=MAX_PACKETSIZE):
 
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM,socket.IPPROTO_UDP)
         self.client_ip = client_ip
         self.port = port
         # self.port = socket.htons(uPort)  # Not sure why this is necessary.
@@ -84,10 +85,9 @@ class NatCommSocket(NatSocket):
         self.server_ip = client_ip  # Currently set to same value as client_ip.  May change when computer changes.
 
         # Connect Socket
-        self._sock.bind((client_ip, 0))
+        self._sock.bind(('', PORT_COMMAND))
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self._sock.setblocking(0)
-        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, OPT_VAL)  # Not originally in this function. Check why.
 
     def recv(self):
         """Receives packet from NatNet Server and returns as NatPacket instance."""
@@ -106,7 +106,7 @@ class NatCommSocket(NatSocket):
           - 1 = NAT_PINGRESPONSE
           - 2 = NAT_REQUEST  (must also send a message string.)
           3 = NAT_RESPONSE
-          4 = NAT_REQUEST_MODELDEF		
+          4 = NAT_REQUEST_MODELDEF      
           5 = NAT_MODELDEF
           6 = NAT_REQUEST_FRAMEOFDATA
           7 = NAT_FRAMEOFDATA
@@ -158,11 +158,9 @@ class NatDataSocket(NatSocket):
 
         # Configure and Connect socket
         self._sock._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        mreq = socket.inet_aton(MULTICAST_ADDRESS) + socket.inet_aton(client_ip)
+        self._sock.bind(('', PORT_DATA))        
+        mreq = struct.pack("4sl", socket.inet_aton(MULTICAST_ADDRESS), socket.INADDR_ANY)
         self._sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, OPT_VAL)
-        self._sock.bind((client_ip, port))
-        # self.bind((Optitrack.CLIENT_ADDRESS, socket.htons(Optitrack.PORT_DATA)))  # If the above line doesn't work.
         self._sock.settimeout(4.0)
 
     def recv(self):
@@ -532,8 +530,8 @@ class NatClient(object):
 
         if (major == 2 and minor >= 7) or major > 2:
             self.timestamp = unpack('d', data.read(8))[0]  # Seconds since starting session, in Double Precision Float
-        else:
-            self.timestamp = unpack('f', data.read(4))[0]  # Seconds since starting session, in Float
+        # else:
+            # self.timestamp = unpack('f', data.read(4))[0]  # Seconds since starting session, in Float
 
         # Check if models have changed from last frame (perhaps something was added during recording session.)
         end_params = unpack('h', data.read(2))[0]

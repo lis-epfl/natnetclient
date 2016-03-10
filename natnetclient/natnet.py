@@ -405,6 +405,9 @@ class NatClient(object):
         # Get Data and Convert to StringIO type for easier and quicker reading.
         data = StringIO(packet._packet[4:])
 
+        if (packet.iMessage != 7):
+            return
+
         # Frame Number
         self.iFrame = unpack("i", data.read(4))[0]  # Frame number
 
@@ -528,15 +531,21 @@ class NatClient(object):
         sub_frames = timecodeSub
         self.time = datetime.time(hours, minutes, seconds)  # TODO: Encode sub_frames into timecode.
 
-        if (major == 2 and minor >= 7) or major > 2:
-            self.timestamp = unpack('d', data.read(8))[0]  # Seconds since starting session, in Double Precision Float
-        # else:
-            # self.timestamp = unpack('f', data.read(4))[0]  # Seconds since starting session, in Float
+        if (major == 2 and minor >= 6):
+            if (major == 2 and minor >= 7) or major > 2:
+                self.timestamp = unpack('d', data.read(8))[0]  # Seconds since starting session, in Double Precision Float
+            else:
+                self.timestamp = unpack('f', data.read(4))[0]  # Seconds since starting session, in Float
 
-        # Check if models have changed from last frame (perhaps something was added during recording session.)
-        end_params = unpack('h', data.read(2))[0]
-        self.is_recording = bool(end_params & 0x01)  # Motive is Recording
-        self.tracked_models_changed = bool( end_params & 0x02)
+            # Check if models have changed from last frame (perhaps something was added during recording session.)
+            end_params = unpack('h', data.read(2))[0]
+            self.is_recording = bool(end_params & 0x01)  # Motive is Recording
+            self.tracked_models_changed = bool( end_params & 0x02)
+
+        eod = unpack('i', data.read(4))[0]
+        if (eod != 0):
+            print('End-of-data marker is not 0')
+
 
     def wait_for_recording_start(self, debug_mode=False):
         """Halts script until recording begins."""

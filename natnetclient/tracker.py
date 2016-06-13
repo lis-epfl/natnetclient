@@ -64,8 +64,9 @@ class RigidBody(object):
 
     @rotation.setter
     def rotation(self, value):
-        coords = value if len(value)==3 else self.__quaternion_to_euler(*value)
-        self.__rotation = RotationEuler(*coords)
+        #coords = value if len(value)==3 else self.__quaternion_to_euler(*value)
+        #self.__rotation = RotationEuler(*coords)
+	self.__rotation = value
 
     def __quaternion_to_euler(self, qx, qy, qz, qw):
         """Convert quaternion (qx, qy, qz, qw) angle to euclidean (x, y, z) angles, in degrees.

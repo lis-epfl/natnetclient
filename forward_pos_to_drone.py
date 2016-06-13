@@ -41,30 +41,34 @@ if __name__ == "__main__":
             body_name = args.body_name
         body = client.rigid_bodies[body_name]
 
+	qw = body.rotation[3]
+	qroll = body.rotation[0]
+	qpitch = -body.rotation[1]
+	qyaw = -body.rotation[2]
         print 'Position: (' + str(body.position.x) + ', ' + str(-body.position.y) + ', ' + str(-body.position.z) + ')'
-	print 'Rotation: (' + str(body.rotation.z) + ', ' + str(-body.rotation.y) + ', ' + str(-body.rotation.x) + ')'
+	print 'Rotation: (' + str(qw) + ', ' + str(qroll) + ', ' + str(qpitch) + ', ' + str(qyaw) + ')'
 	print ''
 
 	# Reconvert the euler angles back to quaternions
 	# The natnet code stores the received quaternions as euler angles
 	# Equations taken from en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
 	# N.B. 	The outputted rotation angles are in degrees
-	heading = -body.rotation.x # Natnet outputs yaw negated
-	attitude = -body.rotation.y # Natnet outputs pitch negated
-	bank = body.rotation.z
+	#heading = -body.rotation.x # Natnet outputs yaw negated
+	#attitude = -body.rotation.y # Natnet outputs pitch negated
+	#bank = body.rotation.z
 	
-	deg2rad = math.pi / 180
-	c1 = math.cos(deg2rad * heading / 2)
-	c2 = math.cos(deg2rad * attitude / 2)
-	c3 = math.cos(deg2rad * bank / 2)
-	s1 = math.sin(deg2rad * heading / 2)
-	s2 = math.sin(deg2rad * attitude / 2)
-	s3 = math.sin(deg2rad * bank / 2)
+	#deg2rad = math.pi / 180
+	#c1 = math.cos(deg2rad * heading / 2)
+	#c2 = math.cos(deg2rad * attitude / 2)
+	#c3 = math.cos(deg2rad * bank / 2)
+	#s1 = math.sin(deg2rad * heading / 2)
+	#s2 = math.sin(deg2rad * attitude / 2)
+	#s3 = math.sin(deg2rad * bank / 2)
 
-	qw = c1 * c2 * c3 + s1 * s2 * s3
-	qyaw = s1 * c2 * c3 - c1 * s2 * s3
-	qpitch = c1 * s2 * c3 + s1 * c2 * s3
-	qroll = c1 * c2 * s3 - s1 * s2 * c3
+	#qw = c1 * c2 * c3 + s1 * s2 * s3
+	#qyaw = s1 * c2 * c3 - c1 * s2 * s3
+	#qpitch = c1 * s2 * c3 + s1 * c2 * s3
+	#qroll = c1 * c2 * s3 - s1 * s2 * c3
 
         # Prepare message for drone
         msg = vehicle.message_factory.att_pos_mocap_encode(time_usec=time.time(),

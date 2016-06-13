@@ -8,10 +8,12 @@ if __name__ == "__main__":
 
     # Command line arguments
     parser = argparse.ArgumentParser(description='Simple program that forwards object position to drone.')
-    parser.add_argument('--natnet_ip', dest='natnet_ip', action='store', type=str, default='127.0.0.1',
-                       help='IP of the machine running Optitrack Motive (default: 127.0.0.1)')
-    parser.add_argument('--mav_link', dest='mav_link', action='store', type=str, default='udp:127.0.0.1:14550',
-                       help='Interface to the drone (default: udp:127.0.0.1:14550)')
+    parser.add_argument('--natnet_ip', dest='natnet_ip', action='store', type=str, default='192.168.0.100',
+                       help='IP of the machine running Optitrack Motive (default: 192.168.0.100)')
+    parser.add_argument('--mav_link', dest='mav_link', action='store', type=str, default='udp:127.0.0.1:14551',
+                       help='Interface to the drone (default: udp:127.0.0.1:14551)')
+    parser.add_argument('--body_name', dest='body_name', action='store', type=str, default="Star_destroyer",
+                       help='The body name of the optitrack rigid body, if not inputted, will send first key')
     args = parser.parse_args()
 
     # Connect to Motive
@@ -32,7 +34,10 @@ if __name__ == "__main__":
         time.sleep(0.1)
 
         # Get first body
-        body_name = client.rigid_bodies.keys()[0]
+        if args.body_name == None:
+            body_name = client.rigid_bodies.keys()[0]
+        else:
+            body_name = args.body_name
         body = client.rigid_bodies[body_name]
 
         # print(body.position.x)

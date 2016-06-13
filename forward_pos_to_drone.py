@@ -3,6 +3,7 @@ import dronekit
 import argparse
 import time
 import sys
+import math
 
 if __name__ == "__main__":
 
@@ -28,7 +29,6 @@ if __name__ == "__main__":
 
     # Connect to the drone
     vehicle = dronekit.connect(args.mav_link, wait_ready=False, rate=200, heartbeat_timeout=0)
-    #vehicle = dronekit.connect('/dev/ttyUSB1', baud=57600, wait_ready=False, rate=200, heartbeat_timeout=0)
 
     while True:
         # Do this at ~10Hz
@@ -41,11 +41,34 @@ if __name__ == "__main__":
             body_name = args.body_name
         body = client.rigid_bodies[body_name]
 
-        print(body.position.x, -body.position.y, -body.position.z)
+        print 'Position: (' + str(body.position.x) + ', ' + str(-body.position.y) + ', ' + str(-body.position.z) + ')'
+	print 'Rotation: (' + str(body.rotation.z) + ', ' + str(-body.rotation.y) + ', ' + str(-body.rotation.x) + ')'
+	print ''
+
+	# Reconvert the euler angles back to quaternions
+	# The natnet code stores the received quaternions as euler angles
+	# Equations taken from en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+	# N.B. 	The outputted rotation angles are in degrees
+	heading = -body.rotation.x # Natnet outputs yaw negated
+	attitude = -body.rotation.y # Natnet outputs pitch negated
+	bank = body.rotation.z
+	
+	deg2rad = math.pi / 180
+	c1 = math.cos(deg2rad * heading / 2)
+	c2 = math.cos(deg2rad * attitude / 2)
+	c3 = math.cos(deg2rad * bank / 2)
+	s1 = math.sin(deg2rad * heading / 2)
+	s2 = math.sin(deg2rad * attitude / 2)
+	s3 = math.sin(deg2rad * bank / 2)
+
+	qw = c1 * c2 * c3 + s1 * s2 * s3
+	qyaw = s1 * c2 * c3 - c1 * s2 * s3
+	qpitch = c1 * s2 * c3 + s1 * c2 * s3
+	qroll = c1 * c2 * s3 - s1 * s2 * c3
 
         # Prepare message for drone
         msg = vehicle.message_factory.att_pos_mocap_encode(time_usec=time.time(),
-                                                           q=[1, 0, 0, 0],
+                                                           q=[qw, qroll, qpitch, qyaw],
                                                            x=body.position.x,
                                                            y=-body.position.y,
                                                            z=-body.position.z)

@@ -27,7 +27,8 @@ if __name__ == "__main__":
         sys.exit(0)
 
     # Connect to the drone
-    vehicle = dronekit.connect(args.mav_link, heartbeat_timeout=0)
+    vehicle = dronekit.connect(args.mav_link, wait_ready=False, rate=200, heartbeat_timeout=0)
+    #vehicle = dronekit.connect('/dev/ttyUSB1', baud=57600, wait_ready=False, rate=200, heartbeat_timeout=0)
 
     while True:
         # Do this at ~10Hz
@@ -40,7 +41,7 @@ if __name__ == "__main__":
             body_name = args.body_name
         body = client.rigid_bodies[body_name]
 
-        # print(body.position.x)
+        print(body.position.x, -body.position.y, -body.position.z)
 
         # Prepare message for drone
         msg = vehicle.message_factory.att_pos_mocap_encode(time_usec=time.time(),

@@ -15,6 +15,7 @@ if __name__ == "__main__":
                        help='Interface to the drone (default: udp:127.0.0.1:14551)')
     parser.add_argument('--body_name', dest='body_name', action='store', type=str, default="Star_destroyer",
                        help='The body name of the optitrack rigid body, if not inputted, will send first key')
+    parser.add_argument('-v', "--verbose", action='store_true', help='Turns on verbose messages.')
     args = parser.parse_args()
 
     # Connect to Motive
@@ -41,23 +42,25 @@ if __name__ == "__main__":
             body_name = args.body_name
         body = client.rigid_bodies[body_name]
 
-	qw = body.rotation[3]
-	qroll = body.rotation[0]
-	qpitch = -body.rotation[1]
-	qyaw = -body.rotation[2]
-        print 'Position: (' + str(body.position.x) + ', ' + str(-body.position.y) + ', ' + str(-body.position.z) + ')'
-	print 'Rotation: (' + str(qw) + ', ' + str(qroll) + ', ' + str(qpitch) + ', ' + str(qyaw) + ')'
-	print ''
+	if body.seen == True:
+	    qw = body.rotation[3]
+	    qroll = body.rotation[0]
+	    qpitch = -body.rotation[1]
+	    qyaw = -body.rotation[2]
+            if args.verbose:
+                print 'Position: (' + str(body.position.x) + ', ' + str(-body.position.y) + ', ' + str(-body.position.z) + ')'
+	        print 'Rotation: (' + str(qw) + ', ' + str(qroll) + ', ' + str(qpitch) + ', ' + str(qyaw) + ')'
+	        print ''
 
-        # Prepare message for drone
-        msg = vehicle.message_factory.att_pos_mocap_encode(time_usec=time.time(),
-                                                           q=[qw, qroll, qpitch, qyaw],
-                                                           x=body.position.x,
-                                                           y=-body.position.y,
-                                                           z=-body.position.z)
+            # Prepare message for drone
+            msg = vehicle.message_factory.att_pos_mocap_encode(time_usec=time.time(),
+                                                               q=[qw, qroll, qpitch, qyaw],
+                                                               x=body.position.x,
+                                                               y=-body.position.y,
+                                                               z=-body.position.z)
 
-        # Send message
-        vehicle.send_mavlink(msg)
+            # Send message
+            vehicle.send_mavlink(msg)
 
         # notify connexion LOSS
         if vehicle.last_heartbeat > 5:

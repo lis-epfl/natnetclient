@@ -42,15 +42,16 @@ if __name__ == "__main__":
             body_name = args.body_name
         body = client.rigid_bodies[body_name]
 
-	if body.seen == True:
-	    qw = body.rotation[3]
-	    qroll = body.rotation[0]
-	    qpitch = -body.rotation[1]
-	    qyaw = -body.rotation[2]
+        if body.seen == True:
+            qw = body.rotation[3]
+            qroll = body.rotation[0]
+            qpitch = -body.rotation[1]
+            qyaw = -body.rotation[2]
+            
             if args.verbose:
                 print 'Position: (' + str(body.position.x) + ', ' + str(-body.position.y) + ', ' + str(-body.position.z) + ')'
-	        print 'Rotation: (' + str(qw) + ', ' + str(qroll) + ', ' + str(qpitch) + ', ' + str(qyaw) + ')'
-	        print ''
+            print 'Rotation: (' + str(qw) + ', ' + str(qroll) + ', ' + str(qpitch) + ', ' + str(qyaw) + ')'
+            print ''
 
             # Prepare message for drone
             msg = vehicle.message_factory.att_pos_mocap_encode(time_usec=time.time(),

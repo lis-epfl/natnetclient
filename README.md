@@ -43,5 +43,12 @@ body_marker_position = body_markers[0].position
 
 ## Retriving 
 
+## Mavproxy script
+```bash
+#!/bin/bash
+mavproxy.py --dialect=mavric --master=/dev/ttyUSB0 --out=udp:127.0.0.1:14550 --out=udp:192.168.0.100:14551
+read -n 1 -p "Press any key"
+```
+
 
 
